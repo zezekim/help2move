@@ -12,6 +12,8 @@ export interface AddressResult {
   city: string;
   country: string;
   placeId: string;
+  lat?: number;
+  lng?: number;
 }
 
 interface Prediction {
@@ -160,7 +162,7 @@ export default function AddressAutocomplete({
     if (!placesService) return;
 
     placesService.getDetails(
-      { placeId: prediction.place_id, fields: ["address_components", "formatted_address"] },
+      { placeId: prediction.place_id, fields: ["address_components", "formatted_address", "geometry"] },
       (place, status) => {
         if (
           status !== window.google.maps.places.PlacesServiceStatus.OK ||
@@ -180,6 +182,8 @@ export default function AddressAutocomplete({
           city: get("locality") || get("postal_town") || get("administrative_area_level_2"),
           country: get("country"),
           placeId: prediction.place_id,
+          lat: place.geometry?.location?.lat(),
+          lng: place.geometry?.location?.lng(),
         };
         onSelect(result);
       }

@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-primary: #1E3A8A;
-  --color-primary-dark: #1e3a8a;
-  --color-primary-light: #3b5fcf;
-  --color-accent: #F97316;
-  --color-accent-light: #fb923c;
-  --color-surface: #F8FAFF;
-  --color-muted: #64748B;
-  --color-border: #E2E8F0;
-
-  --font-sans: var(--font-inter);
+  --color-brand: #0074C8;
+  --color-brand-dark: #005fa3;
+  --color-brand-light: #e8f4fd;
+  --color-accent: #FF9C24;
+  --color-accent-dark: #e88a0f;
+  --color-surface: #F4F9FA;
+  --color-gray-light: #EBEEEB;
+  --color-text: #282828;
+  --color-muted: #4E4B41;
+  --font-sans: var(--font-poppins);
 }
 
 :root {
   --background: #ffffff;
-  --foreground: #0f172a;
+  --foreground: #282828;
 }
 
 * {
@@ -29,40 +29,27 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-poppins), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #F4F9FA; }
+::-webkit-scrollbar-thumb { background: #EBEEEB; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #aaa; }
 
-/* Gradient text utility */
 .gradient-text {
-  background: linear-gradient(135deg, #1E3A8A 0%, #3b5fcf 50%, #F97316 100%);
+  background: linear-gradient(135deg, #0074C8 0%, #FF9C24 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Hero gradient background */
 .hero-gradient {
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1e40af 100%);
+  background: linear-gradient(135deg, #003f70 0%, #0074C8 60%, #0090e0 100%);
 }
 
-/* Glass morphism */
 .glass {
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(16px);
@@ -70,14 +57,6 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.glass-white {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-}
-
-/* Animated gradient border */
 @keyframes gradient-border {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -85,22 +64,7 @@ body {
 }
 
 .gradient-border {
-  background: linear-gradient(90deg, #1E3A8A, #3b5fcf, #F97316, #3b5fcf, #1E3A8A);
+  background: linear-gradient(90deg, #0074C8, #FF9C24, #0074C8);
   background-size: 300% 300%;
   animation: gradient-border 4s ease infinite;
-}
-
-/* Step indicator pulse */
-@keyframes pulse-ring {
-  0% { transform: scale(0.8); opacity: 1; }
-  100% { transform: scale(2); opacity: 0; }
-}
-
-.pulse-ring::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: #F97316;
-  animation: pulse-ring 2s ease-out infinite;
 }
