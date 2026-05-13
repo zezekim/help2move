@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  MapPin,
   Calendar,
   Home,
   User,
@@ -17,17 +16,10 @@ import {
   Wrench,
   Archive,
   Truck,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const addressSchema = z.object({
-  postalCode: z
-    .string()
-    .min(6, "Vul een geldige postcode in")
-    .regex(/^\d{4}\s?[A-Za-z]{2}$/, "Formaat: 1234 AB"),
-  houseNumber: z.string().min(1, "Vul een huisnummer in"),
-  city: z.string().min(2, "Vul een stad in"),
-});
+import AddressAutocomplete, { AddressResult } from "./AddressAutocomplete";
 
 const step3Schema = z.object({
   movingDate: z.string().min(1, "Selecteer een verhuisdatum"),
@@ -45,7 +37,6 @@ const step4Schema = z.object({
     .regex(/^[0-9+\s\-()]+$/, "Ongeldig telefoonnummer"),
 });
 
-type Step1Data = z.infer<typeof addressSchema>;
 type Step3Data = z.infer<typeof step3Schema>;
 type Step4Data = z.infer<typeof step4Schema>;
 
@@ -80,22 +71,14 @@ const surfaceOptions = [
 
 export default function QuoteForm() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [fromData, setFromData] = useState<Step1Data | null>(null);
-  const [toData, setToData] = useState<Step1Data | null>(null);
+  const [fromAddress, setFromAddress] = useState<AddressResult | null>(null);
+  const [toAddress, setToAddress] = useState<AddressResult | null>(null);
+  const [fromError, setFromError] = useState("");
+  const [toError, setToError] = useState("");
   const [detailsData, setDetailsData] = useState<Step3Data | null>(null);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const step1Form = useForm<Step1Data>({
-    resolver: zodResolver(addressSchema),
-    defaultValues: fromData || { postalCode: "", houseNumber: "", city: "" },
-  });
-
-  const step2Form = useForm<Step1Data>({
-    resolver: zodResolver(addressSchema),
-    defaultValues: toData || { postalCode: "", houseNumber: "", city: "" },
-  });
 
   const step3Form = useForm<Step3Data>({
     resolver: zodResolver(step3Schema),
@@ -112,13 +95,21 @@ export default function QuoteForm() {
     defaultValues: { name: "", email: "", phone: "" },
   });
 
-  const onStep1Submit = (data: Step1Data) => {
-    setFromData(data);
+  const handleStep1Next = () => {
+    if (!fromAddress) {
+      setFromError("Selecteer een adres uit de lijst");
+      return;
+    }
+    setFromError("");
     setCurrentStep(2);
   };
 
-  const onStep2Submit = (data: Step1Data) => {
-    setToData(data);
+  const handleStep2Next = () => {
+    if (!toAddress) {
+      setToError("Selecteer een adres uit de lijst");
+      return;
+    }
+    setToError("");
     setCurrentStep(3);
   };
 
@@ -129,11 +120,10 @@ export default function QuoteForm() {
 
   const onStep4Submit = async (data: Step4Data) => {
     setLoading(true);
-    // Simulate API call
     await new Promise((r) => setTimeout(r, 1800));
     setLoading(false);
     setSubmitted(true);
-    console.log("Quote submitted:", { fromData, toData, detailsData, ...data });
+    console.log("Quote submitted:", { fromAddress, toAddress, detailsData, ...data });
   };
 
   const toggleService = (id: string) => {
@@ -152,13 +142,29 @@ export default function QuoteForm() {
         <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/30">
           <Check size={32} className="text-white" strokeWidth={3} />
         </div>
-        <h3 className="text-xl font-bold text-slate-900">
-          Aanvraag ontvangen!
-        </h3>
+        <h3 className="text-xl font-bold text-slate-900">Aanvraag ontvangen!</h3>
         <p className="text-slate-600 max-w-xs">
           We sturen u binnen 24 uur meerdere offertes van gecertificeerde
           verhuisbedrijven.
         </p>
+        {fromAddress && toAddress && (
+          <div className="w-full bg-slate-50 rounded-xl p-4 text-left space-y-2">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                <MapPin size={10} className="text-blue-700" />
+              </div>
+              <span className="text-slate-500">Van:</span>
+              <span className="font-medium text-slate-800 truncate">{fromAddress.fullAddress}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center">
+                <MapPin size={10} className="text-orange-600" />
+              </div>
+              <span className="text-slate-500">Naar:</span>
+              <span className="font-medium text-slate-800 truncate">{toAddress.fullAddress}</span>
+            </div>
+          </div>
+        )}
         <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-xl">
           <Check size={14} className="text-blue-700" />
           <span className="text-sm text-blue-700 font-medium">
@@ -183,7 +189,7 @@ export default function QuoteForm() {
               <div className="flex flex-col items-center gap-1.5">
                 <div
                   className={cn(
-                    "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 relative",
+                    "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300",
                     isCompleted
                       ? "bg-green-500 text-white shadow-md shadow-green-500/30"
                       : isCurrent
@@ -225,7 +231,7 @@ export default function QuoteForm() {
 
       {/* Step 1: Van adres */}
       {currentStep === 1 && (
-        <form onSubmit={step1Form.handleSubmit(onStep1Submit)} className="space-y-4">
+        <div className="space-y-5">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
               <MapPin size={14} className="text-blue-700" />
@@ -233,86 +239,40 @@ export default function QuoteForm() {
             <h3 className="font-bold text-slate-800">Vertrektadres</h3>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-1">
-              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-                Postcode
-              </label>
-              <input
-                {...step1Form.register("postalCode")}
-                placeholder="1234 AB"
-                className={cn(
-                  "w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all",
-                  "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-                  step1Form.formState.errors.postalCode
-                    ? "border-red-300 bg-red-50"
-                    : "border-slate-200 bg-white hover:border-slate-300"
-                )}
-              />
-              {step1Form.formState.errors.postalCode && (
-                <p className="mt-1 text-xs text-red-500">
-                  {step1Form.formState.errors.postalCode.message}
-                </p>
-              )}
-            </div>
-            <div className="col-span-1">
-              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-                Huisnummer
-              </label>
-              <input
-                {...step1Form.register("houseNumber")}
-                placeholder="12 A"
-                className={cn(
-                  "w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all",
-                  "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-                  step1Form.formState.errors.houseNumber
-                    ? "border-red-300 bg-red-50"
-                    : "border-slate-200 bg-white hover:border-slate-300"
-                )}
-              />
-              {step1Form.formState.errors.houseNumber && (
-                <p className="mt-1 text-xs text-red-500">
-                  {step1Form.formState.errors.houseNumber.message}
-                </p>
-              )}
-            </div>
-          </div>
+          <AddressAutocomplete
+            label="Huidig adres"
+            placeholder="Vul je volledige adres in..."
+            onSelect={(addr) => {
+              setFromAddress(addr);
+              setFromError("");
+            }}
+            error={fromError}
+            initialValue={fromAddress?.fullAddress}
+          />
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-              Stad
-            </label>
-            <input
-              {...step1Form.register("city")}
-              placeholder="Amsterdam"
-              className={cn(
-                "w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-                step1Form.formState.errors.city
-                  ? "border-red-300 bg-red-50"
-                  : "border-slate-200 bg-white hover:border-slate-300"
-              )}
-            />
-            {step1Form.formState.errors.city && (
-              <p className="mt-1 text-xs text-red-500">
-                {step1Form.formState.errors.city.message}
-              </p>
-            )}
-          </div>
+          {fromAddress && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-xl">
+              <Check size={13} className="text-green-600 shrink-0" />
+              <span className="text-xs text-green-700 font-medium truncate">
+                {fromAddress.city}{fromAddress.postalCode ? ` · ${fromAddress.postalCode}` : ""}
+              </span>
+            </div>
+          )}
 
           <button
-            type="submit"
+            type="button"
+            onClick={handleStep1Next}
             className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all duration-200 shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-px mt-2"
           >
             Volgende stap
             <ChevronRight size={18} />
           </button>
-        </form>
+        </div>
       )}
 
       {/* Step 2: Naar adres */}
       {currentStep === 2 && (
-        <form onSubmit={step2Form.handleSubmit(onStep2Submit)} className="space-y-4">
+        <div className="space-y-5">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center">
               <MapPin size={14} className="text-orange-600" />
@@ -320,67 +280,38 @@ export default function QuoteForm() {
             <h3 className="font-bold text-slate-800">Bestemmingsadres</h3>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-                Postcode
-              </label>
-              <input
-                {...step2Form.register("postalCode")}
-                placeholder="1234 AB"
-                className={cn(
-                  "w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all",
-                  "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-                  step2Form.formState.errors.postalCode
-                    ? "border-red-300 bg-red-50"
-                    : "border-slate-200 bg-white hover:border-slate-300"
-                )}
-              />
-              {step2Form.formState.errors.postalCode && (
-                <p className="mt-1 text-xs text-red-500">
-                  {step2Form.formState.errors.postalCode.message}
-                </p>
-              )}
+          {/* Show departure summary */}
+          {fromAddress && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                <MapPin size={10} className="text-blue-700" />
+              </div>
+              <span className="text-xs text-slate-500">Van:</span>
+              <span className="text-xs font-semibold text-slate-700 truncate">
+                {fromAddress.fullAddress}
+              </span>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-                Huisnummer
-              </label>
-              <input
-                {...step2Form.register("houseNumber")}
-                placeholder="12 A"
-                className={cn(
-                  "w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all",
-                  "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-                  step2Form.formState.errors.houseNumber
-                    ? "border-red-300 bg-red-50"
-                    : "border-slate-200 bg-white hover:border-slate-300"
-                )}
-              />
-            </div>
-          </div>
+          )}
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
-              Stad
-            </label>
-            <input
-              {...step2Form.register("city")}
-              placeholder="Rotterdam"
-              className={cn(
-                "w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-                step2Form.formState.errors.city
-                  ? "border-red-300 bg-red-50"
-                  : "border-slate-200 bg-white hover:border-slate-300"
-              )}
-            />
-            {step2Form.formState.errors.city && (
-              <p className="mt-1 text-xs text-red-500">
-                {step2Form.formState.errors.city.message}
-              </p>
-            )}
-          </div>
+          <AddressAutocomplete
+            label="Nieuw adres"
+            placeholder="Vul je volledige adres in..."
+            onSelect={(addr) => {
+              setToAddress(addr);
+              setToError("");
+            }}
+            error={toError}
+            initialValue={toAddress?.fullAddress}
+          />
+
+          {toAddress && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-xl">
+              <Check size={13} className="text-green-600 shrink-0" />
+              <span className="text-xs text-green-700 font-medium truncate">
+                {toAddress.city}{toAddress.postalCode ? ` · ${toAddress.postalCode}` : ""}
+              </span>
+            </div>
+          )}
 
           <div className="flex gap-3 mt-2">
             <button
@@ -392,14 +323,15 @@ export default function QuoteForm() {
               Terug
             </button>
             <button
-              type="submit"
+              type="button"
+              onClick={handleStep2Next}
               className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-all duration-200 shadow-lg shadow-orange-500/30 hover:-translate-y-px"
             >
               Volgende stap
               <ChevronRight size={18} />
             </button>
           </div>
-        </form>
+        </div>
       )}
 
       {/* Step 3: Details */}
@@ -412,7 +344,6 @@ export default function QuoteForm() {
             <h3 className="font-bold text-slate-800">Verhuisdetails</h3>
           </div>
 
-          {/* Moving date */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
               Gewenste verhuisdatum
@@ -442,7 +373,6 @@ export default function QuoteForm() {
             )}
           </div>
 
-          {/* Home type */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">
               Type woning
@@ -470,7 +400,6 @@ export default function QuoteForm() {
             </div>
           </div>
 
-          {/* Surface area */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">
               Woonoppervlakte
@@ -487,9 +416,7 @@ export default function QuoteForm() {
             >
               <option value="">Selecteer oppervlakte</option>
               {surfaceOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
+                <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
             {step3Form.formState.errors.surfaceArea && (
@@ -499,7 +426,6 @@ export default function QuoteForm() {
             )}
           </div>
 
-          {/* Extra services */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">
               Extra diensten (optioneel)
@@ -562,8 +488,7 @@ export default function QuoteForm() {
           </div>
 
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700 font-medium">
-            Bijna klaar! Vul uw gegevens in en ontvang binnen 24 uur gratis
-            offertes.
+            Bijna klaar! Vul uw gegevens in en ontvang binnen 24 uur gratis offertes.
           </div>
 
           <div>

@@ -122,8 +122,8 @@ export default function Hero() {
               <QuoteForm />
             </div>
 
-            {/* Floating badges */}
-            <div className="absolute -left-6 top-1/3 hidden lg:flex items-center gap-2 bg-white rounded-xl shadow-lg px-3 py-2">
+            {/* Floating badges — pinned to top/bottom edges of card, never overlapping form content */}
+            <div className="absolute -left-6 top-6 hidden lg:flex items-center gap-2 bg-white rounded-xl shadow-lg px-3 py-2">
               <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
                 <Shield size={14} className="text-green-600" />
               </div>
@@ -133,7 +133,7 @@ export default function Hero() {
               </div>
             </div>
 
-            <div className="absolute -right-6 bottom-1/4 hidden lg:flex items-center gap-2 bg-white rounded-xl shadow-lg px-3 py-2">
+            <div className="absolute -right-6 bottom-6 hidden lg:flex items-center gap-2 bg-white rounded-xl shadow-lg px-3 py-2">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <Star
