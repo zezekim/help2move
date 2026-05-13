@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Star, Shield, Users, Award, ArrowRight } from "lucide-react";
+// Star/Shield still used in trust badges grid below
 
 const trustBadges = [
   { icon: Star, label: "5/5 Google", sub: "200+ beoordelingen" },
@@ -152,25 +153,6 @@ export default function Hero() {
               </div>
             </div>
 
-            {/* Floating badges */}
-            <div className="absolute -left-6 top-6 hidden lg:flex items-center gap-2 bg-white rounded-xl shadow-lg px-3 py-2">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <Shield size={14} className="text-green-600" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-[#282828]">100% Gratis</div>
-                <div className="text-xs text-[#4E4B41]">Geen verplichtingen</div>
-              </div>
-            </div>
-
-            <div className="absolute -right-6 bottom-6 hidden lg:flex items-center gap-2 bg-white rounded-xl shadow-lg px-3 py-2">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />
-                ))}
-              </div>
-              <div className="text-xs font-bold text-[#282828]">5 / 5</div>
-            </div>
           </div>
         </div>
       </div>
